@@ -1,39 +1,26 @@
+import { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
-import { chartOptions } from './helpers';
+import { ChartSeriesData, SalesByDate } from '../../types';
+import { formatPrice } from '../../utils/formatters';
+import { makeRequest } from '../../utils/request';
+import { buildChartSeries, chartOptions, sumSalesByDate } from './helpers';
 import './styles.css';
 
-const initialData = [
-  {
-    x: '2020-01-01',
-    y: 45
-  },
-  {
-    x: '2020-01-02',
-    y: 55
-  },
-  {
-    x: '2020-01-03',
-    y: 39
-  },
-  {
-    x: '2020-01-04',
-    y: 25
-  },
-  {
-    x: '2020-01-05',
-    y: 35
-  },
-  {
-    x: '2020-01-06',
-    y: 20
-  },
-  {
-    x: '2020-01-07',
-    y: 50
-  }
-];
+const SalesByDateComponent = () => {
+  const [chartSeries, setChartSeries] = useState<ChartSeriesData[]>([]);
+  const [totalSum, setTotalSum] = useState(0);
 
-const SalesByDate = () => {
+  useEffect(() => {
+    makeRequest
+      .get<SalesByDate[]>('/sales/by-date?minDate=2017-01-01&maxDate=2017-01-31&gender=FEMALE')
+      .then((response) => {
+        const newChartSeries = buildChartSeries(response.data);
+        setChartSeries(newChartSeries);
+        const newTotalSum = sumSalesByDate(response.data);
+        setTotalSum(newTotalSum);
+      });
+  }, []);
+
   return (
     <div className="sales-by-date-container base-card">
       <div>
@@ -42,7 +29,7 @@ const SalesByDate = () => {
       </div>
       <div className="sales-by-date-data">
         <div className="sales-by-date-quantity-container">
-          <h2 className="sales-by-date-quantity">464.988,00</h2>
+          <h2 className="sales-by-date-quantity">{formatPrice(totalSum)}</h2>
           <span className="sales-by-date-quantity-label">Vendas no período</span>
           <span className="sales-by-date-quantity-description">
             O gráfico mostra as vendas em todas as lojas
@@ -52,7 +39,7 @@ const SalesByDate = () => {
           <ReactApexChart
             type="bar"
             options={chartOptions}
-            series={[{ name: 'vendas', data: initialData }]}
+            series={[{ name: 'vendas', data: chartSeries }]}
             height={240}
             width="100%"
           />
@@ -62,4 +49,4 @@ const SalesByDate = () => {
   );
 };
 
-export default SalesByDate;
+export default SalesByDateComponent;
