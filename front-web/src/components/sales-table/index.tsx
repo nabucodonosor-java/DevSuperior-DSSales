@@ -1,6 +1,34 @@
+import { useEffect, useMemo, useState } from 'react';
+import { FilterData, Sale, SalesResponse } from '../../types';
+import { formatDate, formatGender, formatPrice } from '../../utils/formatters';
+import { buildFiltersParams, makeRequest } from '../../utils/request';
 import './styles.css';
 
-const SalesTable = () => {
+type Props = {
+  filterData?: FilterData;
+};
+
+const extraParams = {
+  page: 0,
+  size: 12,
+  sort: 'date,desc'
+};
+
+const SalesTable = ({ filterData }: Props) => {
+  const params = useMemo(() => buildFiltersParams(filterData, extraParams), [filterData]);
+  const [sales, setSales] = useState<Sale[]>([]);
+
+  useEffect(() => {
+    makeRequest
+      .get<SalesResponse>('/sales', { params })
+      .then((response) => {
+        setSales(response.data.content);
+      })
+      .catch(() => {
+        console.error('Erro de integração coma API');
+      });
+  }, [params]);
+
   return (
     <div className="sales-table-container base-card">
       <h1 className="sales-table-title">Vendas recentes</h1>
@@ -17,51 +45,17 @@ const SalesTable = () => {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>341</td>
-            <td>07/11/1994</td>
-            <td>Feminino</td>
-            <td>Roupas e Acessórios</td>
-            <td>Uberlândia</td>
-            <td>Crédito</td>
-            <td>R$540,00</td>
-          </tr>
-          <tr>
-            <td>341</td>
-            <td>07/11/1994</td>
-            <td>Feminino</td>
-            <td>Roupas e Acessórios</td>
-            <td>Uberlândia</td>
-            <td>Crédito</td>
-            <td>R$540,00</td>
-          </tr>
-          <tr>
-            <td>341</td>
-            <td>07/11/1994</td>
-            <td>Feminino</td>
-            <td>Roupas e Acessórios</td>
-            <td>Uberlândia</td>
-            <td>Crédito</td>
-            <td>R$540,00</td>
-          </tr>
-          <tr>
-            <td>341</td>
-            <td>07/11/1994</td>
-            <td>Feminino</td>
-            <td>Roupas e Acessórios</td>
-            <td>Uberlândia</td>
-            <td>Crédito</td>
-            <td>R$540,00</td>
-          </tr>
-          <tr>
-            <td>341</td>
-            <td>07/11/1994</td>
-            <td>Feminino</td>
-            <td>Roupas e Acessórios</td>
-            <td>Uberlândia</td>
-            <td>Crédito</td>
-            <td>R$540,00</td>
-          </tr>
+          {sales.map((sale) => (
+            <tr key={sale.id}>
+              <td>#{sale.id}</td>
+              <td>{formatDate(sale.date)}</td>
+              <td>{formatGender(sale.gender)}</td>
+              <td>{sale.categoryName}</td>
+              <td>{sale.storeName}</td>
+              <td>{sale.paymentMethod}</td>
+              <td>{formatPrice(sale.total)}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
